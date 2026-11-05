@@ -1,0 +1,16 @@
+# Data handling
+numpy
+pandas
+
+# Machine learning
+scikit-learn
+
+# Visualization
+matplotlib
+seaborn
+
+# Deep learning
+torch
+
+# Jupyter kernel support
+ipykernel
