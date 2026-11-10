@@ -5,6 +5,10 @@ pandas
 # Machine learning
 scikit-learn
 
+# Image processing
+pillow
+scikit-image
+
 # Visualization
 matplotlib
 seaborn
