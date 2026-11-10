@@ -15,6 +15,7 @@ seaborn
 
 # Deep learning
 torch
+torchvision
 
 # Jupyter kernel support
 ipykernel
