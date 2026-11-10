@@ -16,6 +16,7 @@ seaborn
 # Deep learning
 torch
 torchvision
+segmentation-models-pytorch
 
 # Jupyter kernel support
 ipykernel
