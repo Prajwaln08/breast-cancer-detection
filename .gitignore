@@ -2,6 +2,10 @@
 .env/
 .venv/
 
+# Datasets (too large for git)
+data/
+Ultrasonic Data/
+
 # Python cache
 __pycache__/
 *.pyc
