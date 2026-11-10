@@ -17,6 +17,7 @@ seaborn
 torch
 torchvision
 segmentation-models-pytorch
+ultralytics
 
 # Jupyter kernel support
 ipykernel
