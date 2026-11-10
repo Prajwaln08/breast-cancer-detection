@@ -66,6 +66,7 @@ The next step moves from tabular measurements to breast images. A convolutional 
 ```
 Breast Cancer Detection/
 ├── breast_cancer_classification_using_nn.ipynb   # Step 1 notebook
+├── ultrasonic_scans/                             # Step 2 notebooks (data/ and outputs/ not in git)
 ├── requirements.txt                              # Python dependencies
 └── README.md                                     # Project documentation
 ```

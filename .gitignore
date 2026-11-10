@@ -4,7 +4,12 @@
 
 # Datasets (too large for git)
 data/
-Ultrasonic Data/
+
+# Model outputs (weights, predicted masks, plots)
+outputs/
+
+# Planning notes (kept local)
+STEP2_IMPLEMENTATION_PLAN.md
 
 # Python cache
 __pycache__/
