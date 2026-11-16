@@ -11,8 +11,9 @@ outputs/
 # Pretrained weights downloaded by Ultralytics (e.g. yolo11s-seg.pt)
 *.pt
 
-# Planning notes (kept local)
-STEP2_IMPLEMENTATION_PLAN.md
+# Markdown docs stay local, except the README
+*.md
+!README.md
 
 # Python cache
 __pycache__/
