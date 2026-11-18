@@ -2,7 +2,6 @@
 # Streamlit reads this file when it is started from the project folder.
 
 [server]
-address = "localhost"          # only this computer can open the portal
 maxUploadSize = 25             # MB; ultrasound images are far smaller
 
 [browser]

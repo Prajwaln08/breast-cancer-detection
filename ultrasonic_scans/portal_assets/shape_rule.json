@@ -1,0 +1,8 @@
+{
+  "pred_irregular_solidity": 0.96,
+  "pred_irregular_roughness": 1.09,
+  "true_irregular_solidity": 0.9,
+  "true_irregular_roughness": 1.15,
+  "round_axis_ratio": 0.8,
+  "tuned_on": "393 out-of-fold lesions (79 irregular), best balanced accuracy"
+}

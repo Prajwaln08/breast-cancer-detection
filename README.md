@@ -1,8 +1,28 @@
-# Breast Cancer Detection
+# Breast Ultrasound AI
 
-A machine learning project for breast cancer detection, built in two steps and finished with a clinical-style review portal.
+**Breast ultrasound classification, lesion segmentation and clinical review portal built with Python, PyTorch, U-Net and Streamlit**
 
 > **Research use only.** This project is not a medical device and must not be used to diagnose, rule out disease or make treatment decisions.
+
+## About
+
+End-to-end medical imaging and machine learning project for breast cancer detection. It covers data cleaning, exploratory data analysis, deep learning model development, statistical evaluation, lesion measurement and deployment of an interactive review application.
+
+The main system is a multi-task U-Net ensemble with a ResNet34 encoder. It classifies breast ultrasound images as normal, benign or malignant, segments lesions and reports lesion count, position, size and shape. The project also benchmarks a ResNet18 classifier ensemble and a YOLO11 segmentation model, and includes a PyTorch neural network for tabular diagnostic data.
+
+**Key results on a frozen 102-image test set**
+
+- Achieved 96.4% malignancy sensitivity (27 of 28 cancers; 95% range 88.5% to 100%) and 90.0% positive predictive value.
+- Reached 91.2% accuracy for three-class classification and a 0.793 Dice score for lesion segmentation.
+- Achieved a 0.859 lesion detection F1 score, compared with 0.818 for YOLO11s-seg.
+- Cleaned 780 raw images to 669 by removing duplicates, conflicting labels and look-alikes of test images to reduce data leakage.
+- Built a Streamlit portal with scan upload, lesion annotation, measurement KPIs, model performance reporting and safety warnings.
+
+**Skills and technologies**
+
+Python, PyTorch, torchvision, Deep Learning, Computer Vision, Medical Image Analysis, Convolutional Neural Networks (CNN), U-Net, ResNet, YOLO11, Image Classification, Image Segmentation, Multi-Task Learning, Transfer Learning, Ensemble Learning, Cross-Validation, Data Cleaning, Data Leakage Prevention, Exploratory Data Analysis (EDA), Model Evaluation, Threshold Tuning, Bootstrap Confidence Intervals, scikit-learn, scikit-image, SciPy, NumPy, pandas, Matplotlib, Seaborn, Streamlit, Jupyter Notebook, Git, GitHub.
+
+## Project Overview
 
 | Step | Approach | Data | Status |
 | :--: | -------- | ---- | :----: |
@@ -87,7 +107,7 @@ Run them in this order from `ultrasonic_scans/`:
 
 ### Test Results
 
-Results on the 102 held-out test images:
+Results on the frozen 102-image test set:
 
 | Metric | ResNet18 ensemble | **U-Net ensemble** | YOLO11s-seg |
 | ------ | :---------------: | :----------------: | :---------: |
@@ -104,6 +124,7 @@ The U-Net's 95% range for malignancy sensitivity is 88.5% to 100%.
 ### Limitations
 
 - The test set is small and comes from one public dataset. The models have not been externally validated.
+- The test set was reviewed across development versions, so its scores may be slightly optimistic.
 - Some tumours are not located. The portal then shows a warning and draws no outline.
 - Sizes are in pixels because the images do not record their real scale.
 - Shape labels are approximate and are not BI-RADS categories.
@@ -120,7 +141,7 @@ The Streamlit portal lets a reviewer upload a scan or open a test-set example, t
 - model performance and a short explanation of how the model works
 - clear warnings when the class and the outline disagree
 
-The portal runs on your own computer and does not write uploaded scans to disk. Remove patient identifiers before uploading a scan.
+Uploaded scans are processed by the server running the app and are not saved by the portal. Do not upload identifiable patient data.
 
 ---
 
@@ -132,9 +153,11 @@ Breast Cancer Detection/
 ├── ultrasonic_scans/
 │   ├── 00_clean_data.ipynb ... 05_model_yolo.ipynb   # Step 2 notebooks
 │   ├── app.py                                    # Streamlit review portal
+│   ├── requirements.txt                          # Packages for the deployed portal
+│   ├── portal_assets/                            # Portal settings, test results and checksums
 │   ├── data/                                     # BUSI images and masks (not in git)
 │   └── outputs/                                  # Models and results (not in git)
-├── .streamlit/config.toml                        # Portal theme and local-only setting
+├── .streamlit/config.toml                        # Portal theme and upload limit
 ├── requirements.txt                              # Python dependencies
 └── README.md                                     # Project documentation
 ```
@@ -168,15 +191,13 @@ Open `breast_cancer_classification_using_nn.ipynb`, select the **Python (Breast 
 
 **5. Run the portal**
 
-The dataset and trained models are not stored in git. Download BUSI into `ultrasonic_scans/data/` with `benign/`, `malignant/` and `normal/` folders, then run notebooks `00`, `03` and `04`. In `03`, set `TRAIN = True` for the first run.
-
 From the project folder:
 
 ```bash
-streamlit run ultrasonic_scans/app.py
+streamlit run ultrasonic_scans/app.py --server.address localhost
 ```
 
-The portal opens at `http://localhost:8501` and is only reachable from your computer.
+The portal opens at `http://localhost:8501`. It uses local model files when they exist and otherwise downloads the published model files. Test-set examples appear only when the BUSI dataset is present in `ultrasonic_scans/data/`.
 
 ---
 

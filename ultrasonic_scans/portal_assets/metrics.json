@@ -1,0 +1,79 @@
+{
+  "dice_tumour_images": 0.793480843950046,
+  "iou_tumour_images": 0.7249100626099683,
+  "dice_benign": 0.8050235956198607,
+  "dice_malignant": 0.7699830994793516,
+  "normal_images_with_false_lesion": 0.17647058823529413,
+  "tumour_images_with_no_lesion_found": 0.08235294117647059,
+  "accuracy": 0.9117647058823529,
+  "tumour_sensitivity": 0.9411764705882353,
+  "tumour_specificity": 0.8823529411764706,
+  "tumour_roc_auc": 0.9847750865051903,
+  "malignant_recall": 0.9642857142857143,
+  "malignant_precision": 0.9,
+  "malignant_roc_auc": 0.9806949806949807,
+  "confidence_95": {
+    "dice_tumour_images": [
+      0.7323,
+      0.8512
+    ],
+    "iou_tumour_images": [
+      0.6635,
+      0.7822
+    ],
+    "dice_benign": [
+      0.7263,
+      0.8833
+    ],
+    "dice_malignant": [
+      0.6672,
+      0.8525
+    ],
+    "normal_images_with_false_lesion": [
+      0.0,
+      0.3686
+    ],
+    "tumour_images_with_no_lesion_found": [
+      0.0333,
+      0.1444
+    ],
+    "accuracy": [
+      0.8529,
+      0.9608
+    ],
+    "tumour_sensitivity": [
+      0.8837,
+      0.9873
+    ],
+    "tumour_specificity": [
+      0.7059,
+      1.0
+    ],
+    "tumour_roc_auc": [
+      0.9621,
+      0.9985
+    ],
+    "malignant_recall": [
+      0.8846,
+      1.0
+    ],
+    "malignant_precision": [
+      0.7778,
+      1.0
+    ],
+    "malignant_roc_auc": [
+      0.9388,
+      1.0
+    ]
+  },
+  "dice_with_markers": 0.7523932387329639,
+  "dice_without_markers": 0.8728224264382045,
+  "accuracy_with_markers": 0.90625,
+  "accuracy_without_markers": 0.9210526315789473,
+  "malignant_threshold": 0.22,
+  "smooth_masks": true,
+  "clean_masks": true,
+  "image_size": 384,
+  "n_models": 5,
+  "test_images": 102
+}

@@ -10,9 +10,15 @@ The image steps are the same as in 03_model_unet.ipynb and the measurements are 
 04_measure.ipynb, so the app gives the same results as the notebooks.
 """
 import base64
+import hashlib
 import html
 import io
 import json
+import os
+import tempfile
+import threading
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 import numpy as np
@@ -28,7 +34,10 @@ from skimage.measure import approximate_polygon, find_contours, label, perimeter
 
 BASE_DIR = Path(__file__).resolve().parent     # the ultrasonic_scans folder
 DATA_DIR = BASE_DIR / 'data'
-MODEL_DIR = BASE_DIR / 'outputs' / 'unet_multitask'
+MODEL_DIR = BASE_DIR / 'outputs' / 'unet_multitask'     # model files on a computer that trained them
+ASSET_DIR = BASE_DIR / 'portal_assets'                  # settings and test results used by the portal
+DOWNLOAD_DIR = Path(tempfile.gettempdir()) / 'breast_ultrasound_ai_models'
+MODEL_RELEASE_URL = 'https://github.com/Prajwaln08/breast-cancer-detection/releases/download/v3-cross-validation'
 MAX_IMAGE_SIDE = 4000                          # larger uploads are refused (scans here are about 500-1000 px)
 MODEL_VERSION = 'v3'
 DATASET_URL = 'https://doi.org/10.1016/j.dib.2019.104863'   # the published BUSI dataset paper
@@ -314,22 +323,74 @@ def panel_heading(icon, title, detail, active=False):
 # Load the saved models and settings (only once per app start)
 # ------------------------------------------------------------------
 
-@st.cache_resource(show_spinner='Loading the 5 models...')
-def load_models():
-    """Rebuild the 5 fold models. Returns (models, config, shape rule, test metrics)."""
-    config = json.loads((MODEL_DIR / 'config.json').read_text())
-    shape_rule = json.loads((MODEL_DIR / 'shape_rule.json').read_text())
-    metrics = json.loads((MODEL_DIR / 'metrics.json').read_text())
+@st.cache_resource
+def load_settings():
+    """Portal settings. Returns (config, shape rule, test metrics, model checksums)."""
+    return tuple(json.loads((ASSET_DIR / name).read_text())
+                 for name in ['config.json', 'shape_rule.json', 'metrics.json', 'model_checksums.json'])
 
+
+def file_sha256(path):
+    digest = hashlib.sha256()
+    with open(path, 'rb') as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def download_file(url, target, expected_sha256):
+    """Download a file and keep it only if its checksum is correct."""
+    target.parent.mkdir(parents=True, exist_ok=True)
+    partial = target.with_name(target.name + f'.{os.getpid()}.{threading.get_ident()}.part')
+    try:
+        with urllib.request.urlopen(url, timeout=120) as response, open(partial, 'wb') as file:
+            while chunk := response.read(1024 * 1024):
+                file.write(chunk)
+        if file_sha256(partial) != expected_sha256:
+            raise ValueError(f'Checksum mismatch for {target.name}')
+        os.replace(partial, target)
+    finally:
+        partial.unlink(missing_ok=True)
+
+
+@st.cache_resource(show_spinner='Preparing the 5 models. The first start can take a few minutes...')
+def prepare_model_files():
+    """Find the model files on this computer, or download and verify them. Returns their paths."""
+    config, _, _, checksums = load_settings()
+    paths = []
+    for name in config['model_files']:
+        local = MODEL_DIR / name
+        if local.exists():
+            paths.append(local)
+            continue
+        target = DOWNLOAD_DIR / name
+        if not target.exists() or file_sha256(target) != checksums[name]:
+            download_file(f'{MODEL_RELEASE_URL}/{name}', target, checksums[name])
+        paths.append(target)
+    return paths
+
+
+@st.cache_resource
+def prediction_lock():
+    """Only one scan is analysed at a time, because the models are loaded in turn to save memory."""
+    return threading.Lock()
+
+
+def predict_with_models(x, config):
+    """Run the 5 models in turn. Only one model is in memory at a time."""
     head = {'classes': len(config['classes']), 'dropout': config['classification_dropout']}
-    models = []
-    for file_name in config['model_files']:
+    lesion_maps, class_scores = [], []
+    with prediction_lock():
         model = smp.Unet(encoder_name=config['encoder'], encoder_weights=None,
                          in_channels=3, classes=1, aux_params=head)
-        model.load_state_dict(torch.load(MODEL_DIR / file_name, map_location='cpu'))
         model.eval()
-        models.append(model)
-    return models, config, shape_rule, metrics
+        with torch.no_grad():
+            for path in prepare_model_files():
+                model.load_state_dict(torch.load(path, map_location='cpu', mmap=True, weights_only=True))
+                mask_logits, class_logits = model(x)
+                lesion_maps.append(torch.sigmoid(mask_logits)[0, 0].numpy())
+                class_scores.append(torch.softmax(class_logits, dim=1)[0].numpy())
+    return lesion_maps, class_scores
 
 
 # ------------------------------------------------------------------
@@ -447,17 +508,12 @@ def measure_lesion(number, region, width, height, rule):
 @st.cache_data(show_spinner='Analysing the scan...', max_entries=50)
 def analyse(image_bytes):
     """Run all 5 models on one scan. Returns the class result, the final mask and the lesions."""
-    models, config, rule, _ = load_models()
+    config, rule, _, _ = load_settings()
     image = Image.open(io.BytesIO(image_bytes)).convert('L')
     width, height = image.size
     x = to_model_input(image, config)
 
-    lesion_maps, class_scores = [], []
-    with torch.no_grad():
-        for model in models:
-            mask_logits, class_logits = model(x)
-            lesion_maps.append(torch.sigmoid(mask_logits)[0, 0].numpy())
-            class_scores.append(torch.softmax(class_logits, dim=1)[0].numpy())
+    lesion_maps, class_scores = predict_with_models(x, config)
 
     # Average the 5 models
     lesion_probs = np.mean(lesion_maps, axis=0)
@@ -558,8 +614,14 @@ def annotated_scan(image_bytes, true_mask_paths=None):
 @st.cache_data
 def load_test_scans():
     """The test images: never used for training the models."""
-    manifest = pd.read_csv(DATA_DIR / 'manifest.csv')
-    return manifest[manifest['split'] == 'test'].reset_index(drop=True)
+    return pd.read_csv(ASSET_DIR / 'test_manifest.csv')
+
+
+@st.cache_data
+def available_examples():
+    """Test images whose files are present. Deployments can run without the dataset."""
+    scans = load_test_scans()
+    return scans[[(DATA_DIR / path).exists() for path in scans['image_path']]].reset_index(drop=True)
 
 
 @st.cache_data(max_entries=50)
@@ -592,7 +654,7 @@ def use_example():
 def choose_scan():
     """Two separate ways to pick a scan. Returns a dict describing the scan being shown, or None."""
     active = st.session_state.setdefault('active_source', None)
-    scans = load_test_scans()
+    scans = available_examples()
     if active:
         page_html(f'<style>.st-key-{active}_panel {{ border-color: #0F766E !important; '
                   'box-shadow: 0 0 0 1px #0F766E; }</style>')
@@ -602,13 +664,14 @@ def choose_scan():
         panel_heading(UPLOAD_ICON, 'Upload a scan', 'PNG or JPEG breast ultrasound image', active == 'upload')
         upload = st.file_uploader('Breast ultrasound image', type=['png', 'jpg', 'jpeg'], key='upload',
                                   on_change=use_upload, label_visibility='collapsed')
-        page_html('<p class="input-note">Remove patient identifiers first. Processed on this computer and '
-                  'not written to disk.</p>')
+        page_html('<p class="input-note">Do not upload identifiable patient data. Remove identifiers first. Scans '
+                  'are processed by the server running this app and are not saved by the portal.</p>')
     with example_column.container(border=True, key='example_panel', height='stretch'):
         panel_heading(LIBRARY_ICON, 'Try an example', 'Test-set image with its hand-drawn reference',
                       active == 'example')
         index = st.selectbox('Example from the test set', scans.index, index=None, key='example_index',
-                             placeholder='Select a test image', on_change=use_example,
+                             placeholder='Select a test image' if len(scans) else 'Examples are not included here',
+                             disabled=scans.empty, on_change=use_example,
                              format_func=lambda i: Path(scans.loc[i, 'image_path']).stem,
                              label_visibility='collapsed')
         page_html(f'<p class="input-note"><strong>Source:</strong> <a href="{DATASET_URL}" target="_blank" '
@@ -911,11 +974,7 @@ def show_results(scan, config):
 def main():
     st.set_page_config(page_title='Breast Ultrasound AI', page_icon=':material/monitor_heart:',
                        layout='wide', initial_sidebar_state='collapsed')
-    needed = ['config.json', 'shape_rule.json', 'metrics.json']
-    if not all((MODEL_DIR / name).exists() for name in needed):
-        st.error(f'Model files were not found in {MODEL_DIR}. Run 03_model_unet and 04_measure first.')
-        st.stop()
-    _, config, _, metrics = load_models()
+    config, _, metrics, _ = load_settings()
 
     show_header(config)
     page_html(overview_html(metrics, config))
@@ -926,11 +985,16 @@ def main():
         page_html(f"""
         <div class="card empty">{svg_image(SCAN_ICON)}
           <strong>No scan selected</strong>
-          <span>Upload a breast ultrasound image or choose a test-set example to see the AI finding.</span>
+          <span>Upload a breast ultrasound image, or choose a test-set example when examples are available.</span>
         </div>""")
         st.stop()
 
     if not scan_is_usable(scan['bytes']):
+        st.stop()
+    try:
+        prepare_model_files()
+    except (OSError, ValueError, urllib.error.URLError):
+        st.error('The model files could not be loaded. Please try again later.')
         st.stop()
     show_results(scan, config)
 
