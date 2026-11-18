@@ -8,6 +8,7 @@ scikit-learn
 # Image processing
 pillow
 scikit-image
+scipy
 
 # Visualization
 matplotlib
@@ -18,6 +19,9 @@ torch
 torchvision
 segmentation-models-pytorch
 ultralytics
+
+# Web app
+streamlit>=1.67
 
 # Jupyter kernel support
 ipykernel

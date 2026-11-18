@@ -1,0 +1,20 @@
+# Settings for the Breast Ultrasound AI portal.
+# Streamlit reads this file when it is started from the project folder.
+
+[server]
+address = "localhost"          # only this computer can open the portal
+maxUploadSize = 25             # MB; ultrasound images are far smaller
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"        # no Deploy button or developer menu
+
+[theme]
+base = "light"
+primaryColor = "#0F766E"
+backgroundColor = "#F4F7FA"
+secondaryBackgroundColor = "#E8EEF4"
+textColor = "#15293D"
+font = "sans serif"
