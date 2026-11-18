@@ -33,9 +33,9 @@ from scipy.spatial.distance import pdist, squareform
 from skimage.measure import approximate_polygon, find_contours, label, perimeter, regionprops
 
 BASE_DIR = Path(__file__).resolve().parent     # the ultrasonic_scans folder
-DATA_DIR = BASE_DIR / 'data'
 MODEL_DIR = BASE_DIR / 'outputs' / 'unet_multitask'     # model files on a computer that trained them
 ASSET_DIR = BASE_DIR / 'portal_assets'                  # settings and test results used by the portal
+DATA_DIR = ASSET_DIR / 'examples'                       # test-set example scans and their masks
 DOWNLOAD_DIR = Path(tempfile.gettempdir()) / 'breast_ultrasound_ai_models'
 MODEL_RELEASE_URL = 'https://github.com/Prajwaln08/breast-cancer-detection/releases/download/v3-cross-validation'
 MAX_IMAGE_SIDE = 4000                          # larger uploads are refused (scans here are about 500-1000 px)
@@ -675,8 +675,8 @@ def choose_scan():
                              format_func=lambda i: Path(scans.loc[i, 'image_path']).stem,
                              label_visibility='collapsed')
         page_html(f'<p class="input-note"><strong>Source:</strong> <a href="{DATASET_URL}" target="_blank" '
-                  'rel="noopener noreferrer">BUSI dataset</a> (Al-Dhabyani et al., <em>Data in Brief</em>, 2020), '
-                  'collected at Baheya Hospital, Cairo. These test images were not used to train the models.</p>')
+                  'rel="noopener noreferrer">Dataset of breast ultrasound images</a> (Al-Dhabyani et al., '
+                  '<em>Data in Brief</em>, 2020). These test images were not used to train the models.</p>')
 
     if active == 'upload' and upload is not None:
         return {'bytes': upload.getvalue(), 'row': None, 'name': upload.name, 'source': 'Uploaded scan'}

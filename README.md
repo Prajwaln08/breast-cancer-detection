@@ -154,7 +154,7 @@ Breast Cancer Detection/
 │   ├── 00_clean_data.ipynb ... 05_model_yolo.ipynb   # Step 2 notebooks
 │   ├── app.py                                    # Streamlit review portal
 │   ├── requirements.txt                          # Packages for the deployed portal
-│   ├── portal_assets/                            # Portal settings, test results and checksums
+│   ├── portal_assets/                            # Portal settings, test results and example scans
 │   ├── data/                                     # BUSI images and masks (not in git)
 │   └── outputs/                                  # Models and results (not in git)
 ├── .streamlit/config.toml                        # Portal theme and upload limit
@@ -197,7 +197,7 @@ From the project folder:
 streamlit run ultrasonic_scans/app.py --server.address localhost
 ```
 
-The portal opens at `http://localhost:8501`. It uses local model files when they exist and otherwise downloads the published model files. Test-set examples appear only when the BUSI dataset is present in `ultrasonic_scans/data/`.
+The portal opens at `http://localhost:8501`. It uses local model files when they exist and otherwise downloads the published model files. The 102 test-set example scans are included in `ultrasonic_scans/portal_assets/examples/`.
 
 ---
 
