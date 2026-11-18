@@ -2,6 +2,8 @@
 
 **Breast ultrasound classification, lesion segmentation and clinical review portal built with Python, PyTorch, U-Net and Streamlit**
 
+**Live demo:** [breast-ultrasound-ai.streamlit.app](https://breast-ultrasound-ai.streamlit.app)
+
 > **Research use only.** This project is not a medical device and must not be used to diagnose, rule out disease or make treatment decisions.
 
 ## About
@@ -133,7 +135,7 @@ The U-Net's 95% range for malignancy sensitivity is 88.5% to 100%.
 
 ## Review Portal
 
-The Streamlit portal lets a reviewer upload a scan or open a test-set example, then shows:
+The [live Streamlit portal](https://breast-ultrasound-ai.streamlit.app) lets a reviewer upload a scan or open a test-set example, then shows:
 
 - the AI finding with normal, benign and malignant probabilities
 - an annotated scan with each detected lesion outlined and numbered
